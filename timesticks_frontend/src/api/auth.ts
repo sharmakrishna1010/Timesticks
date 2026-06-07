@@ -15,4 +15,10 @@ export const authApi = {
 
   resendOTP: (data: { userId: string; email: string }) =>
     api.post('/auth/resendOTP', data),
+
+  resetPassword: (data: { email: string }) =>
+    api.post('/auth/resetPassword', data),
+
+  resetPasswordVerification: (data: { userId: string; otp: string; newPassword: string }) =>
+    api.post('/auth/resetPasswordVerification', data),
 };
