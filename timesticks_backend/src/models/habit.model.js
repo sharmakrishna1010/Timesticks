@@ -7,12 +7,18 @@ const habitSchema = new mongoose.Schema({
     },
     title: {
         type: String,
-        required: true
+        required: true,
+        maxlength: [50, 'Title cannot exceed 50 characters'],
+        trim: true
     },
-    description: { type: String },
+    description: {
+        type: String,
+        maxlength: [250, 'Description cannot exceed 250 characters'],
+        trim: true
+    },
     currentStreak: {
         type: Number,
-        default: 0
+        default: 0,
     },
     highestStreak: {
         type: Number,
@@ -22,7 +28,6 @@ const habitSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    // Store the 90-day history as a simple array of objects
     history: [{
         date: {
             type: String,

@@ -21,7 +21,7 @@ const validateFullName = (fullName) => {
 }
 
 export const login = async (req, res) => {
-    if (!req.body) {
+    if (!req.body || Object.keys(req.body).length === 0) {
         return res.status(400).json({ message: "All fields are required" });
     }
     try {
@@ -44,13 +44,13 @@ export const login = async (req, res) => {
         return res.status(200).json({ message: "Logged in successfully" });
 
     } catch (error) {
-        console.log("ERROR IN LOGIN: ", error);
+        console.error("ERROR IN LOGIN: ", error);
         res.status(500).json({ message: "Internal server error" });
     }
 }
 
 export const signup = async (req, res) => {
-    if (!req.body) {
+    if (!req.body || Object.keys(req.body).length === 0) {
         return res.status(400).json({ message: "All fields are required" });
     }
     try {
@@ -92,13 +92,13 @@ export const signup = async (req, res) => {
         return res.status(201).json({ message: `OTP sent to ${email}`, userId: newUser._id });
 
     } catch (error) {
-        console.log("ERROR IN SIGNUP: ", error);
+        console.error("ERROR IN SIGNUP: ", error);
         res.status(500).json({ message: "Internal server error" });
     }
 }
 
 export const resendOTP = async (req, res) => {
-    if (!req.body) {
+    if (!req.body || Object.keys(req.body).length === 0) {
         return res.status(400).json({ message: "All fields are required" });
     }
     try {
@@ -124,13 +124,13 @@ export const resendOTP = async (req, res) => {
 
         res.status(200).json({ message: otpResult.message });
     } catch (error) {
-        console.log("ERROR IN RESEND OTP: ", error);
+        console.error("ERROR IN RESEND OTP: ", error);
         res.status(500).json({ message: "Internal server error" });
     }
 }
 
 export const verifyOTP = async (req, res) => {
-    if (!req.body) {
+    if (!req.body || Object.keys(req.body).length === 0) {
         return res.status(400).json({ message: "All fields are required" });
     }
     try {
@@ -169,7 +169,7 @@ export const verifyOTP = async (req, res) => {
         await OTP.deleteMany({ userId });
         return res.status(200).json({ message: "Email verified successfully" });
     } catch (error) {
-        console.log("ERROR IN VERIFY OTP: ", error);
+        console.error("ERROR IN VERIFY OTP: ", error);
         res.status(500).json({ message: "Internal server error" });
     }
 }
@@ -179,7 +179,7 @@ export const logout = async (req, res) => {
         res.cookie("jwt", "", { maxAge: 0 });
         res.status(200).json({ message: "Logged out successfully" });
     } catch (error) {
-        console.log("ERROR IN LOGOUT CONTROLLER", error.message);
+        console.error("ERROR IN LOGOUT CONTROLLER", error.message);
         res.status(500).json({ error: "Internal server error" });
     }
 };
