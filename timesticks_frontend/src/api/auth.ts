@@ -1,4 +1,4 @@
-import api from './axios.js';
+import api from './axios.ts';
 
 export const authApi = {
   signup: (data: { fullName: string; email: string; password: string }) =>

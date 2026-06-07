@@ -66,7 +66,7 @@ function getViewLabel(viewMode: ViewMode, lists: List[]): string {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { user, theme } = useAuth();
+  const { theme } = useAuth();
 
   // ── Apply Dark Theme ───────────────────────
   useEffect(() => {

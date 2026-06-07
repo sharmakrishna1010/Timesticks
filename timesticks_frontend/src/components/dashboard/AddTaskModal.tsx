@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import type { Task } from '../../api/tasks';
 import type { List } from '../../api/lists';
 
 interface AddTaskModalProps {
