@@ -32,6 +32,21 @@
   --font-brand: 'Montserrat', sans-serif;
 }
 
+body.dark-theme {
+  --bg:          #121212;
+  --surface:     #1e1e1e;
+  --border:      #333333;
+  --border-focus:#1D9BF0;
+
+  --text-primary:   #f5f5f5;
+  --text-secondary: #a3a3a3;
+  --text-muted:     #737373;
+
+  --blue-light:  rgba(29, 155, 240, 0.1);
+  --error-light: rgba(239, 68, 68, 0.1);
+  --success-light:rgba(34, 197, 94, 0.1);
+}
+
 /* ──────────────────────────────────────────
    Reset & Base
 ────────────────────────────────────────── */
@@ -995,9 +1010,12 @@ body {
   transition: opacity 80ms;
 }
 
-.habit-cell-done   { background: var(--blue); }
-.habit-cell-missed { background: var(--surface); border: 1px solid var(--border); }
-.habit-cell-na     { background: transparent; border: 1px dashed var(--border); opacity: 0.5; }
+.habit-cell-done   { background: var(--blue); border: 1px solid var(--blue); }
+.habit-cell-missed { background: #e5e7eb; border: 1px solid #d1d5db; }
+.habit-cell-na     { background: transparent; border: 1px dashed #d1d5db; opacity: 0.8; }
+
+body.dark-theme .habit-cell-missed { background: #333333; border: 1px solid #4a4a4a; }
+body.dark-theme .habit-cell-na     { border: 1px dashed #4a4a4a; opacity: 0.5; }
 
 /* Today: ring around the cell */
 .habit-cell-today            { box-shadow: 0 0 0 2px var(--blue-ring); border: 1px solid var(--blue); }

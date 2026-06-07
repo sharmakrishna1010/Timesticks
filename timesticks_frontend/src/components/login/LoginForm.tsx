@@ -26,8 +26,8 @@ export default function LoginForm() {
     setLoading(true);
     setServerError('');
     try {
-      await authApi.login(formData);
-      setUser({ userId: '', email: formData.email });
+      const res = await authApi.login(formData);
+      setUser(res.data.user);
       navigate('/dashboard');
     } catch (err: any) {
       const msg = err?.response?.data?.message || '';

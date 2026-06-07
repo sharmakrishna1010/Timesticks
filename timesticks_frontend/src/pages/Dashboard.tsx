@@ -66,7 +66,16 @@ function getViewLabel(viewMode: ViewMode, lists: List[]): string {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, theme } = useAuth();
+
+  // ── Apply Dark Theme ───────────────────────
+  useEffect(() => {
+    if (theme === 'dark') document.body.classList.add('dark-theme');
+    else document.body.classList.remove('dark-theme');
+    
+    // Cleanup on unmount to keep auth pages light
+    return () => document.body.classList.remove('dark-theme');
+  }, [theme]);
 
   // ── Core data ──────────────────────────────
   const [tasks,  setTasks]  = useState<Task[]>([]);

@@ -43,7 +43,10 @@ export const login = async (req, res) => {
             return res.status(400).json({ message: "Incorrect email or password" });
         }
         await generateTokenAndSetCookie(user._id, res);
-        return res.status(200).json({ message: "Logged in successfully" });
+        return res.status(200).json({ 
+            message: "Logged in successfully",
+            user: { _id: user._id, email: user.email, fullName: user.fullName }
+        });
 
     } catch (error) {
         console.error("ERROR IN LOGIN: ", error);
@@ -172,7 +175,10 @@ export const verifyOTP = async (req, res) => {
         user.isEmailVerified = true;
         await user.save();
         await OTP.deleteMany({ userId });
-        return res.status(200).json({ message: "Email verified successfully" });
+        return res.status(200).json({ 
+            message: "Email verified successfully",
+            user: { _id: user._id, email: user.email, fullName: user.fullName }
+        });
     } catch (error) {
         console.error("ERROR IN VERIFY OTP: ", error);
         res.status(500).json({ message: "Internal server error" });

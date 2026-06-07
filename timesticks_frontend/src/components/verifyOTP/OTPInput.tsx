@@ -77,8 +77,8 @@ export default function OTPInput() {
     setLoading(true);
     setError('');
     try {
-      await authApi.verifyOTP({ userId: pendingVerify.userId, otp });
-      setUser({ userId: pendingVerify.userId, email: pendingVerify.email });
+      const res = await authApi.verifyOTP({ userId: pendingVerify.userId, otp });
+      setUser(res.data.user);
       navigate('/dashboard');
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Invalid OTP. Please try again.');
