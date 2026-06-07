@@ -1,6 +1,7 @@
 import { json } from "express";
 import bcrypt from "bcryptjs";
 import User from "../models/user.model.js";
+import OTP from "../models/otp.model.js";
 import generateAndSendOTP from "../utils/generateAndSendOTP.js";
 import generateTokenAndSetCookie from "../utils/generateToken.js";
 
@@ -9,7 +10,20 @@ const isPasswordStrong = (password) => {
     return regex.test(password);
 }
 
-export const login = (req, res) => {
+const validateMail = (email) => {
+    const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return regex.test(email);
+};
+
+const validateFullName = (fullName) => {
+    const regex = /^[a-zA-Z ]{5,20}$/;
+    return regex.test(fullName);
+}
+
+export const login = async (req, res) => {
+    if (!req.body) {
+        return res.status(400).json({ message: "All fields are required" });
+    }
     try {
         const { email, password } = req.body;
 
@@ -17,7 +31,7 @@ export const login = (req, res) => {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        const user = await User.isExist(email);
+        const user = await User.findOne({ email });
         if (!user) {
             return res.status(400).json({ message: "Incorrect email or password" });
         }
@@ -26,7 +40,7 @@ export const login = (req, res) => {
         if (!isValid) {
             return res.status(400).json({ message: "Incorrect email or password" });
         }
-
+        await generateTokenAndSetCookie(user._id, res);
         return res.status(200).json({ message: "Logged in successfully" });
 
     } catch (error) {
@@ -35,15 +49,27 @@ export const login = (req, res) => {
     }
 }
 
-export const signup = (req, res) => {
+export const signup = async (req, res) => {
+    if (!req.body) {
+        return res.status(400).json({ message: "All fields are required" });
+    }
     try {
+
         const { email, fullName, password } = req.body;
 
         if (!email || !fullName || !password) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        const user = User.isExist(email);
+        if (!validateMail(email)) {
+            return res.status(400).json({ message: "Please enter a valid email" });
+        }
+
+        if (!validateFullName(fullName)) {
+            return res.status(400).json({ message: "Please enter a valid full name" });
+        }
+
+        const user = await User.findOne({ email });
         if (user) {
             return res.status(400).json({ message: "User already exists" });
         }
@@ -54,16 +80,16 @@ export const signup = (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const newUser = new User({ email, fullName, hashedPassword });
+        const newUser = new User({ email, fullName, password: hashedPassword });
         await newUser.save();
 
-        const otpResult = await generateAndSendOTP({ userId: user._id, email });
+        const otpResult = await generateAndSendOTP({ userId: newUser._id, email });
         if (!otpResult.success) {
             return res.status(500).json({ error: otpResult.error });
         }
 
         await generateTokenAndSetCookie(newUser._id, res);
-        return res.status(201).json({ message: `Please verify your email\nUserId: ${newUser._id}` });
+        return res.status(201).json({ message: `OTP sent to ${email}`, userId: newUser._id });
 
     } catch (error) {
         console.log("ERROR IN SIGNUP: ", error);
@@ -72,10 +98,23 @@ export const signup = (req, res) => {
 }
 
 export const resendOTP = async (req, res) => {
+    if (!req.body) {
+        return res.status(400).json({ message: "All fields are required" });
+    }
     try {
         const { userId, email } = req.body;
         if (!userId || !email) {
             return res.status(400).json({ message: "All fields are required" });
+        }
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        if (user.isEmailVerified) {
+            return res.status(400).json({ message: "User is already verified" });
         }
 
         const otpResult = await generateAndSendOTP({ userId, email });
@@ -91,6 +130,9 @@ export const resendOTP = async (req, res) => {
 }
 
 export const verifyOTP = async (req, res) => {
+    if (!req.body) {
+        return res.status(400).json({ message: "All fields are required" });
+    }
     try {
         const { userId, otp } = req.body;
         if (!userId || !otp) {
@@ -98,18 +140,28 @@ export const verifyOTP = async (req, res) => {
         }
 
         const user = await User.findById(userId);
+
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        const otpEntry = await otpModel.findOne({ userId });
+        if (user.isEmailVerified) {
+            return res.status(400).json({ message: "User is already verified" });
+        }
+
+        const otpEntry = await OTP.findOne({ userId });
         if (!otpEntry) {
             return res.status(400).json({ message: "OTP not found" });
         }
 
-        const isValid = await bcrypt.compare(otp, otpEntry.otp);
+        const isValid = await bcrypt.compare(String(otp), otpEntry.otp);
         if (!isValid) {
             return res.status(400).json({ message: "Invalid OTP" });
+        }
+
+        if (otpEntry.expiresAt < new Date()) {
+            await OTP.deleteMany({ userId });
+            return res.status(400).json({ message: "OTP has expired. Please request a new one." });
         }
 
         user.isEmailVerified = true;

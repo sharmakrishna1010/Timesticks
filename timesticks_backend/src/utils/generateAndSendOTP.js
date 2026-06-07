@@ -1,6 +1,7 @@
 import sendMail from "./sendMail.js";
 import otpModel from "../models/otp.model.js";
 import bcrypt from "bcryptjs";
+import User from "../models/user.model.js";
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000);
 
@@ -11,6 +12,11 @@ const generateAndSendOTP = async ({ userId, email }) => {
 
     const salt = await bcrypt.genSalt(10);
     const hashedOtp = await bcrypt.hash(otp.toString(), salt);
+
+    const user = await User.findById(userId);
+    if (user.email !== email) {
+      return { success: false, error: "Wrong email" };
+    }
 
     // clear old OTPs
     await otpModel.deleteMany({ userId });
