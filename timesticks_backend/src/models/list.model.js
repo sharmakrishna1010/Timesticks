@@ -9,6 +9,10 @@ const listSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    isDefault: {
+        type: Boolean,
+        default: false
+    }
 }, { timestamps: true });
 
 const List = mongoose.model("List", listSchema);

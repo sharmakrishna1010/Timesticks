@@ -4,6 +4,8 @@ import User from "../models/user.model.js";
 import OTP from "../models/otp.model.js";
 import generateAndSendOTP from "../utils/generateAndSendOTP.js";
 import generateTokenAndSetCookie from "../utils/generateToken.js";
+import { createDefaultList } from "./list.controller.js";
+import { createDefaultTask } from "./task.controller.js";
 
 const isPasswordStrong = (password) => {
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{6,20}$/;
@@ -89,6 +91,9 @@ export const signup = async (req, res) => {
         }
 
         await generateTokenAndSetCookie(newUser._id, res);
+        const defaultList = await createDefaultList(newUser._id);
+        const defaultTask = await createDefaultTask(newUser._id, defaultList._id);
+
         return res.status(201).json({ message: `OTP sent to ${email}`, userId: newUser._id });
 
     } catch (error) {

@@ -14,18 +14,14 @@ const taskSchema = new mongoose.Schema({
         required: true
     },
     description: { type: String },
-    status: {
-        type: String,
-        enum: ['todo', 'done', 'postpone'],
-        default: 'todo'
+    done: {
+        type: Boolean,
+        default: false
     },
     priority: {
         type: String,
-        enum: ['High', 'Low']
-    },
-    category: {
-        type: String,
-        default: 'general'
+        enum: ['High', 'Low', 'Medium'],
+        default: 'Medium'
     },
     dueDate: {
         type: Date,

@@ -1,4 +1,3 @@
-
 import express from "express";
 import { requireAuth } from "../middlewares/requireAuth.js";
 import { createHabit, getHabits, updateHabitDetails, toggleHabitToday, deleteHabit } from "../controllers/habit.controller.js";
