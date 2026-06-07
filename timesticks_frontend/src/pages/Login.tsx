@@ -1,12 +1,12 @@
 import Navbar from '../components/signUp/Navbar';
-import SignUpForm from '../components/signUp/SignUpForm';
+import LoginForm from '../components/login/LoginForm';
 
-export default function SignUp() {
+export default function Login() {
   return (
     <div className="auth-page">
-      <Navbar showLogin />
+      <Navbar showSignup />
       <main className="auth-main">
-        <SignUpForm />
+        <LoginForm />
       </main>
     </div>
   );

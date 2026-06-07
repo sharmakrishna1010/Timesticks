@@ -1,23 +1,44 @@
+import { Link } from 'react-router-dom';
 import logo from '../../assets/logo_noBG.png';
 
-export default function Navbar() {
-  return (
-    <nav className="flex items-center justify-between px-8 py-4 w-full bg-[#f8f9fa]">
-      <div className="flex items-center gap-2 cursor-pointer">
-        <img src={logo} alt="Timesticks Logo" className="h-15 w-auto" />
-        <p 
-          className="text-3xl font-bold tracking-tight text-gray-900"
-          style={{ fontFamily: "'Montserrat', sans-serif" }}
-        >
-          T<span className="text-blue-500">i</span>mesticks
-        </p>
-      </div>
+interface NavbarProps {
+  showLogin?: boolean;
+  showSignup?: boolean;
+}
 
-      <div className="flex items-center gap-4 text-sm">
-        <span className="text-gray-500  cursor-default">Already have an account?</span>
-        <button className="cursor-pointer px-4 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors font-medium">
-          Sign In
-        </button>
+export default function Navbar({ showLogin = false, showSignup = false }: NavbarProps) {
+  return (
+    <nav className="auth-navbar">
+      <Link to="/" className="brand">
+        <img src={logo} alt="Timesticks Logo" className="brand-logo" />
+        <span className="brand-name">T<span>i</span>mesticks</span>
+      </Link>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {showLogin && (
+          <>
+            <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+              Already have an account?
+            </span>
+            <Link to="/login">
+              <button className="ts-btn ts-btn-primary" style={{ padding: '8px 18px' }}>
+                Sign In
+              </button>
+            </Link>
+          </>
+        )}
+        {showSignup && (
+          <>
+            <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+              New here?
+            </span>
+            <Link to="/signup">
+              <button className="ts-btn ts-btn-primary" style={{ padding: '8px 18px' }}>
+                Sign Up
+              </button>
+            </Link>
+          </>
+        )}
       </div>
     </nav>
   );
