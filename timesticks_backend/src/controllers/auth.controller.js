@@ -97,7 +97,8 @@ export const signup = async (req, res) => {
 
         await generateTokenAndSetCookie(newUser._id, res);
         const defaultList = await createDefaultList(newUser._id);
-        const defaultTask = await createDefaultTask(newUser._id, defaultList._id);
+        const userTimezone = req.headers['x-timezone'];
+        const defaultTask = await createDefaultTask(newUser._id, defaultList._id, userTimezone);
 
         return res.status(201).json({ message: `OTP sent to ${email}`, userId: newUser._id });
 

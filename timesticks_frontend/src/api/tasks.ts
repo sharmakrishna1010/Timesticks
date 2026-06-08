@@ -11,6 +11,7 @@ export interface Task {
   user: string;
   createdAt: string;
   updatedAt: string;
+  relativeStatus?: 'Due Today' | 'Overdue' | 'Upcoming';
 }
 
 export interface CreateTaskData {

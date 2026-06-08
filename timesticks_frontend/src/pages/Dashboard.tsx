@@ -25,7 +25,13 @@ function getFilteredTasks(tasks: Task[], viewMode: ViewMode, todayStr: string): 
   if (viewMode === 'today') {
     return tasks.filter(t => {
       const due = t.dueDate?.split('T')[0];
-      return due <= todayStr; // includes overdue + today (done or pending)
+      return due === todayStr; // only today's tasks (not overdue)
+    });
+  }
+  if (viewMode === 'overdue') {
+    return tasks.filter(t => {
+      const due = t.dueDate?.split('T')[0];
+      return due !== undefined && due < todayStr && !t.done;
     });
   }
   if (viewMode === 'all') return tasks;
@@ -50,10 +56,11 @@ function getFilteredTasks(tasks: Task[], viewMode: ViewMode, todayStr: string): 
 }
 
 function getViewLabel(viewMode: ViewMode, lists: List[]): string {
-  if (viewMode === 'today')  return 'Today';
-  if (viewMode === 'all')    return 'All Tasks';
-  if (viewMode === 'next7')  return 'Next 7 Days';
-  if (viewMode === 'habits') return 'Habits';
+  if (viewMode === 'today')   return 'Today';
+  if (viewMode === 'all')     return 'All Tasks';
+  if (viewMode === 'next7')   return 'Next 7 Days';
+  if (viewMode === 'overdue') return 'Overdue';
+  if (viewMode === 'habits')  return 'Habits';
   if (viewMode.startsWith('list:')) {
     const id = viewMode.slice(5);
     return lists.find(l => l._id === id)?.title ?? 'List';
@@ -83,8 +90,11 @@ export default function Dashboard() {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ── View ───────────────────────────────────
+  // ── View ─────────────────────────────────
   const [viewMode, setViewMode] = useState<ViewMode>('today');
+
+  // ── Mobile sidebar ────────────────────────
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // ── Modals ─────────────────────────────────
   const [showAddTask,   setShowAddTask]   = useState(false);
@@ -120,9 +130,13 @@ export default function Dashboard() {
   }, []);
 
   // ── Derived state ──────────────────────────
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
   const isHabitsView = viewMode === 'habits';
   const displayedTasks = isHabitsView ? [] : getFilteredTasks(tasks, viewMode, todayStr);
+  // Overdue tasks shown as secondary section in Today view
+  const overdueTasks = viewMode === 'today'
+    ? tasks.filter(t => { const due = t.dueDate?.split('T')[0]; return due !== undefined && due < todayStr && !t.done; })
+    : [];
   const viewLabel = getViewLabel(viewMode, lists);
 
   // ── Task handlers ──────────────────────────
@@ -234,6 +248,8 @@ export default function Dashboard() {
     ? `${habits.filter(h => h.todayStatus).length} of ${habits.length} done today`
     : viewMode === 'today'
     ? formatTodayHeader()
+    : viewMode === 'overdue'
+    ? `${displayedTasks.length} task${displayedTasks.length !== 1 ? 's' : ''} past due`
     : viewMode === 'all'
     ? `${tasks.filter(t => !t.done).length} pending total`
     : viewMode === 'next7'
@@ -251,11 +267,26 @@ export default function Dashboard() {
         onRenameList={handleRenameList}
         onDeleteList={setDeletingList}
         habitCount={habits.length}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
 
       <main className="dash-main">
         {/* Header */}
         <div className="dash-header">
+          {/* Hamburger – mobile only */}
+          <button
+            id="mobile-menu-btn"
+            className="hamburger-btn"
+            onClick={() => setSidebarOpen(o => !o)}
+            aria-label="Toggle menu"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
           <div>
             <h1 className="dash-title">{viewLabel}</h1>
             <p className="dash-date">{headerSub}</p>
@@ -265,7 +296,7 @@ export default function Dashboard() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
-              Add Task
+              <span className="add-task-label">Add Task</span>
             </button>
           )}
         </div>
@@ -290,6 +321,7 @@ export default function Dashboard() {
                 onEdit={setEditingTask}
                 onAddClick={() => setShowAddTask(true)}
                 title={viewLabel}
+                overdueTasks={viewMode === 'today' ? overdueTasks : []}
               />
 
               {/* Show habit tracker in Today view as secondary section */}

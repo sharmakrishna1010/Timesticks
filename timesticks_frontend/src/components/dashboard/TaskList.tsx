@@ -10,6 +10,7 @@ interface TaskListProps {
   onEdit: (task: Task) => void;
   onAddClick: () => void;
   title?: string;
+  overdueTasks?: Task[];
 }
 
 function formatDate(dateStr: string) {
@@ -63,13 +64,75 @@ const priorityColors: Record<string, string> = {
   High: '#dc2626', Medium: '#d97706', Low: '#16a34a'
 };
 
-export default function TaskList({ tasks, lists, onToggle, onDelete, onEdit, onAddClick, title = 'Tasks' }: TaskListProps) {
+export default function TaskList({ tasks, lists, onToggle, onDelete, onEdit, onAddClick, title = 'Tasks', overdueTasks = [] }: TaskListProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const getListName = (listId: string) => lists.find(l => l._id === listId)?.title || '';
 
   const pending = tasks.filter(t => !t.done);
   const done    = tasks.filter(t => t.done);
   const sorted  = [...pending, ...done];
+
+  const renderTaskCard = (task: Task) => (
+    <div
+      key={task._id}
+      className="task-item"
+      onMouseEnter={() => setHoveredId(task._id)}
+      onMouseLeave={() => setHoveredId(null)}
+    >
+      {/* Check */}
+      <button
+        className={`task-check${task.done ? ' done' : ''}`}
+        onClick={() => onToggle(task._id)}
+        aria-label={task.done ? 'Mark incomplete' : 'Mark complete'}
+        id={`task-toggle-${task._id}`}
+      >
+        <CheckIcon />
+      </button>
+
+      {/* Content */}
+      <div className="task-body">
+        <p className={`task-title${task.done ? ' done' : ''}`}>{task.title}</p>
+        <div className="task-meta">
+          {getListName(task.list) && (
+            <span className="task-list-tag">
+              <ListTagIcon />
+              {getListName(task.list)}
+            </span>
+          )}
+          <span className={`task-priority priority-${task.priority}`}>
+            <FlagIcon color={priorityColors[task.priority]} />
+            {task.priority}
+          </span>
+          <span className="task-due">
+            <CalendarIcon />
+            {formatDate(task.dueDate)}
+          </span>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="task-actions" style={{ opacity: hoveredId === task._id ? 1 : 0 }}>
+        <button
+          className="task-edit"
+          onClick={() => onEdit(task)}
+          aria-label="Edit task"
+          id={`task-edit-${task._id}`}
+        >
+          <PencilIcon />
+        </button>
+        <button
+          className="task-delete"
+          onClick={() => onDelete(task._id)}
+          aria-label="Delete task"
+          id={`task-delete-${task._id}`}
+        >
+          <TrashIcon />
+        </button>
+      </div>
+    </div>
+  );
+
+  const hasAnyTasks = sorted.length > 0 || overdueTasks.length > 0;
 
   return (
     <div>
@@ -80,7 +143,7 @@ export default function TaskList({ tasks, lists, onToggle, onDelete, onEdit, onA
         </span>
       </div>
 
-      {sorted.length === 0 ? (
+      {!hasAnyTasks ? (
         <div className="empty-state">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/>
@@ -89,65 +152,86 @@ export default function TaskList({ tasks, lists, onToggle, onDelete, onEdit, onA
         </div>
       ) : (
         <div className="task-list">
-          {sorted.map(task => (
-            <div
-              key={task._id}
-              className="task-item"
-              onMouseEnter={() => setHoveredId(task._id)}
-              onMouseLeave={() => setHoveredId(null)}
-            >
-              {/* Check */}
-              <button
-                className={`task-check${task.done ? ' done' : ''}`}
-                onClick={() => onToggle(task._id)}
-                aria-label={task.done ? 'Mark incomplete' : 'Mark complete'}
-                id={`task-toggle-${task._id}`}
-              >
-                <CheckIcon />
-              </button>
+          {sorted.map(task => renderTaskCard(task))}
 
-              {/* Content */}
-              <div className="task-body">
-                <p className={`task-title${task.done ? ' done' : ''}`}>{task.title}</p>
-                <div className="task-meta">
-                  {getListName(task.list) && (
-                    <span className="task-list-tag">
-                      <ListTagIcon />
-                      {getListName(task.list)}
-                    </span>
-                  )}
-                  <span className={`task-priority priority-${task.priority}`}>
-                    <FlagIcon color={priorityColors[task.priority]} />
-                    {task.priority}
-                  </span>
-                  <span className="task-due">
-                    <CalendarIcon />
-                    {formatDate(task.dueDate)}
-                  </span>
+          {/* Overdue section shown only in Today view */}
+          {overdueTasks.length > 0 && (
+            <>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                margin: '18px 0 8px',
+              }}>
+                <span style={{
+                  fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em',
+                  textTransform: 'uppercase', color: '#ef4444',
+                }}>⚠ Overdue</span>
+                <div style={{ flex: 1, height: '1px', background: '#ef444430' }} />
+                <span style={{ fontSize: '0.68rem', color: '#ef4444', fontWeight: 500 }}>
+                  {overdueTasks.length} task{overdueTasks.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+              {overdueTasks.map(task => (
+                <div
+                  key={task._id}
+                  className="task-item overdue-task"
+                  onMouseEnter={() => setHoveredId(task._id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                  style={{ borderLeft: '3px solid #ef4444' }}
+                >
+                  {/* Check */}
+                  <button
+                    className={`task-check${task.done ? ' done' : ''}`}
+                    onClick={() => onToggle(task._id)}
+                    aria-label={task.done ? 'Mark incomplete' : 'Mark complete'}
+                    id={`task-toggle-${task._id}`}
+                  >
+                    <CheckIcon />
+                  </button>
+
+                  {/* Content */}
+                  <div className="task-body">
+                    <p className={`task-title${task.done ? ' done' : ''}`}>{task.title}</p>
+                    <div className="task-meta">
+                      {getListName(task.list) && (
+                        <span className="task-list-tag">
+                          <ListTagIcon />
+                          {getListName(task.list)}
+                        </span>
+                      )}
+                      <span className={`task-priority priority-${task.priority}`}>
+                        <FlagIcon color={priorityColors[task.priority]} />
+                        {task.priority}
+                      </span>
+                      <span className="task-due" style={{ color: '#ef4444' }}>
+                        <CalendarIcon />
+                        {formatDate(task.dueDate)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="task-actions" style={{ opacity: hoveredId === task._id ? 1 : 0 }}>
+                    <button
+                      className="task-edit"
+                      onClick={() => onEdit(task)}
+                      aria-label="Edit task"
+                      id={`task-edit-overdue-${task._id}`}
+                    >
+                      <PencilIcon />
+                    </button>
+                    <button
+                      className="task-delete"
+                      onClick={() => onDelete(task._id)}
+                      aria-label="Delete task"
+                      id={`task-delete-overdue-${task._id}`}
+                    >
+                      <TrashIcon />
+                    </button>
+                  </div>
                 </div>
-              </div>
-
-              {/* Actions */}
-              <div className="task-actions" style={{ opacity: hoveredId === task._id ? 1 : 0 }}>
-                <button
-                  className="task-edit"
-                  onClick={() => onEdit(task)}
-                  aria-label="Edit task"
-                  id={`task-edit-${task._id}`}
-                >
-                  <PencilIcon />
-                </button>
-                <button
-                  className="task-delete"
-                  onClick={() => onDelete(task._id)}
-                  aria-label="Delete task"
-                  id={`task-delete-${task._id}`}
-                >
-                  <TrashIcon />
-                </button>
-              </div>
-            </div>
-          ))}
+              ))}
+            </>
+          )}
         </div>
       )}
 

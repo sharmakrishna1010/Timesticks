@@ -1,17 +1,18 @@
 import { MAX_TASK_PREMIUM, MAX_TASK_FREE } from "../constants/constants.js";
 import List from "../models/list.model.js";
 import Task from "../models/task.model.js";
+import { getLocalToday } from "../utils/dateUtils.js";
 
-export const createDefaultTask = async (userId, listId) => {
+export const createDefaultTask = async (userId, listId, timezone) => {
     try {
-        const today = new Date().toISOString().split('T')[0];
+        const todayStr = getLocalToday(timezone);
         const task = await Task.create({
             list: listId,
             title: "Welcome To Timesticks",
             description: "This is your first task.",
             done: false,
             priority: "Medium",
-            dueDate: today,
+            dueDate: todayStr,
             user: userId
         });
 
@@ -36,6 +37,9 @@ export const createTask = async (req, res) => {
             dueDate
         } = req.body;
 
+        const userTimezone = req.headers['x-timezone'];
+        const todayStr = getLocalToday(userTimezone);
+
         if (!title) {
             return res.status(400).json({ message: "Task title is required." });
         }
@@ -56,7 +60,6 @@ export const createTask = async (req, res) => {
             listId = defaultList._id;
         }
 
-        const todayStr = new Date().toISOString().split('T')[0];
         if (dueDate && dueDate < todayStr) {
             return res.status(400).json({ message: "Due date cannot be in the past." });
         }
@@ -97,8 +100,29 @@ export const createTask = async (req, res) => {
 
 export const getTasks = async (req, res) => {
     try {
-        const tasks = await Task.find({ user: req.user._id });
-        res.status(200).json(tasks);
+        const userId = req.user._id;
+        const userTimezone = req.headers['x-timezone'];
+        const localTodayStr = getLocalToday(userTimezone);
+
+        const tasks = await Task.find({ user: userId });
+
+        const evaluatedTasks = tasks.map(task => {
+            if (!task.dueDate) return task;
+
+            let dynamicStatus = "Upcoming";
+            if (task.dueDate === localTodayStr) {
+                dynamicStatus = "Due Today";
+            } else if (task.dueDate < localTodayStr && !task.done) {
+                dynamicStatus = "Overdue";
+            }
+
+            return {
+                ...task.toObject(),
+                relativeStatus: dynamicStatus
+            };
+        });
+
+        res.status(200).json(evaluatedTasks);
     } catch (error) {
         console.error("ERROR IN GET TASKS:", error);
         res.status(500).json({ error: "Failed to get tasks" });
@@ -128,6 +152,8 @@ export const updateTask = async (req, res) => {
     try {
         const { taskId } = req.params;
         const { title, description, priority, dueDate, listId } = req.body;
+        const userTimezone = req.headers['x-timezone'];
+        const todayStr = getLocalToday(userTimezone);
 
         const task = await Task.findOne({ _id: taskId, user: req.user._id });
 
@@ -143,7 +169,6 @@ export const updateTask = async (req, res) => {
             return res.status(400).json({ message: "Description must be less than 250 characters." });
         }
 
-        const todayStr = new Date().toISOString().split('T')[0];
         if (dueDate && dueDate < todayStr) {
             return res.status(400).json({ message: "Due date cannot be in the past." });
         }

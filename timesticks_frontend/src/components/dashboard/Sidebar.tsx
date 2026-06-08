@@ -9,6 +9,7 @@ export type ViewMode =
   | 'today'
   | 'all'
   | 'next7'
+  | 'overdue'
   | 'habits'
   | `list:${string}`
   | `priority:${'High' | 'Medium' | 'Low'}`;
@@ -29,6 +30,10 @@ interface SidebarProps {
   onRenameList: (list: List) => Promise<void>;
   onDeleteList: (list: List) => void;
   habitCount: number;
+  /** Mobile sidebar open state */
+  isOpen?: boolean;
+  /** Called when sidebar should close (mobile) */
+  onClose?: () => void;
 }
 
 /* ── Icons ──────────────────────────────────── */
@@ -47,6 +52,11 @@ const Icons = {
   Next7: (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
+    </svg>
+  ),
+  Overdue: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
     </svg>
   ),
   Inbox: (
@@ -222,7 +232,7 @@ function RenamePopover({ list, onSave, onCancel }: {
 export default function Sidebar({
   lists, tasks, viewMode, onSetView,
   onCreateList, onRenameList, onDeleteList,
-  habitCount,
+  habitCount, isOpen = false, onClose,
 }: SidebarProps) {
   const navigate = useNavigate();
   const { user, logout, theme, toggleTheme } = useAuth();
@@ -234,9 +244,10 @@ export default function Sidebar({
   const pendingTasks = tasks.filter(t => !t.done);
 
   // Counts
-  const todayCount  = pendingTasks.filter(t => t.dueDate?.split('T')[0] <= todayStr).length;
-  const allCount    = pendingTasks.length;
-  const next7Count  = pendingTasks.filter(t => { const d = t.dueDate?.split('T')[0]; return d >= todayStr && d <= next7Str; }).length;
+  const todayCount   = pendingTasks.filter(t => t.dueDate?.split('T')[0] === todayStr).length;
+  const overdueCount = pendingTasks.filter(t => { const d = t.dueDate?.split('T')[0]; return d !== undefined && d < todayStr; }).length;
+  const allCount     = pendingTasks.length;
+  const next7Count   = pendingTasks.filter(t => { const d = t.dueDate?.split('T')[0]; return d >= todayStr && d <= next7Str; }).length;
   const highCount   = pendingTasks.filter(t => t.priority === 'High').length;
   const medCount    = pendingTasks.filter(t => t.priority === 'Medium').length;
   const lowCount    = pendingTasks.filter(t => t.priority === 'Low').length;
@@ -249,7 +260,8 @@ export default function Sidebar({
     return a.title.localeCompare(b.title);
   });
 
-  const setView = (v: ViewMode) => { onSetView(v); navigate('/dashboard'); };
+  // Close sidebar on mobile whenever a nav item is selected
+  const setView = (v: ViewMode) => { onSetView(v); navigate('/dashboard'); onClose?.(); };
 
   const handleLogout = async () => {
     try { await authApi.logout(); } catch (_) {}
@@ -259,7 +271,13 @@ export default function Sidebar({
 
   return (
     <>
-      <aside className="sidebar">
+      {/* Mobile backdrop overlay */}
+      <div
+        className={`sidebar-overlay${isOpen ? ' sidebar-overlay--visible' : ''}`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <aside className={`sidebar${isOpen ? ' sidebar--open' : ''}`}>
         {/* Brand */}
         <div className="sidebar-brand">
           <img src={logo} alt="Timesticks Logo" className="brand-logo" />
@@ -270,9 +288,19 @@ export default function Sidebar({
         <div className="sidebar-section">
           <p className="sidebar-section-label">Tasks</p>
 
-          <SidebarBtn icon={Icons.Today} label="Today"      count={todayCount}  active={viewMode === 'today'}  onClick={() => setView('today')}  id="sidebar-today" />
-          <SidebarBtn icon={Icons.All}   label="All Tasks"  count={allCount}    active={viewMode === 'all'}    onClick={() => setView('all')}    id="sidebar-all" />
-          <SidebarBtn icon={Icons.Next7} label="Next 7 Days" count={next7Count} active={viewMode === 'next7'}  onClick={() => setView('next7')}  id="sidebar-next7" />
+          <SidebarBtn icon={Icons.Today}   label="Today"      count={todayCount}   active={viewMode === 'today'}   onClick={() => setView('today')}   id="sidebar-today" />
+          <SidebarBtn icon={Icons.All}     label="All Tasks"  count={allCount}     active={viewMode === 'all'}     onClick={() => setView('all')}     id="sidebar-all" />
+          <SidebarBtn icon={Icons.Next7}   label="Next 7 Days" count={next7Count}  active={viewMode === 'next7'}   onClick={() => setView('next7')}   id="sidebar-next7" />
+          {overdueCount > 0 && (
+            <SidebarBtn
+              icon={<span style={{ color: '#ef4444', display: 'flex' }}>{Icons.Overdue}</span>}
+              label="Overdue"
+              count={overdueCount}
+              active={viewMode === 'overdue'}
+              onClick={() => setView('overdue')}
+              id="sidebar-overdue"
+            />
+          )}
 
           <div className="sidebar-divider" />
 
@@ -288,7 +316,7 @@ export default function Sidebar({
             />
           ))}
 
-          <button className="sidebar-new-list-btn" id="sidebar-new-list" onClick={onCreateList}>
+          <button className="sidebar-new-list-btn" id="sidebar-new-list" onClick={() => { onCreateList(); onClose?.(); }}>
             {Icons.Plus}
             New List
           </button>

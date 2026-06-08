@@ -1,5 +1,6 @@
 import { MAX_HABIT_FREE, MAX_HABIT_PREMIUM } from "../constants/constants.js";
 import Habit from "../models/habit.model.js";
+import { getLocalToday, getLocalYesterday } from "../utils/dateUtils.js";
 
 export const createHabit = async (req, res) => {
     if (!req.body || Object.keys(req.body).length === 0) {
@@ -54,13 +55,44 @@ export const createHabit = async (req, res) => {
 
 export const getHabits = async (req, res) => {
     try {
-        const habits = await Habit.find({ user: req.user._id });
-        return res.status(200).json(habits);
+        const userId = req.user._id; 
+        const userTimezone = req.headers['x-timezone'];
+        
+        const todayStr = getLocalToday(userTimezone);
+        const yesterdayStr = getLocalYesterday(userTimezone);
+
+        const habits = await Habit.find({ user: userId });
+
+        const evaluatedHabits = habits.map(habit => {
+            
+            const hasCompletedToday = habit.history.some(
+                entry => entry.date === todayStr && entry.completed
+            );
+
+            const hasCompletedYesterday = habit.history.some(
+                entry => entry.date === yesterdayStr && entry.completed
+            );
+
+            let computedStreak = habit.currentStreak;
+            
+            if (!hasCompletedToday && !hasCompletedYesterday) {
+                computedStreak = 0;
+            }
+
+            return {
+                ...habit.toObject(),
+                todayStatus: hasCompletedToday,
+                currentStreak: computedStreak
+            };
+        });
+
+        res.status(200).json(evaluatedHabits);
+
     } catch (error) {
-        console.error("ERROR IN GET HABITS:", error);
-        res.status(500).json({ error: "Failed to get habits" });
+        console.error("Error fetching habits:", error);
+        res.status(500).json({ message: "Internal server error" });
     }
-}
+};
 
 
 export const updateHabitDetails = async (req, res) => {

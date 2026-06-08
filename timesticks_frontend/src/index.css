@@ -366,6 +366,12 @@ body {
   font-weight: 600;
 }
 
+/* Overdue sidebar button — red accent */
+#sidebar-overdue { color: #ef4444; }
+#sidebar-overdue:hover { background: var(--error-light); color: #ef4444; }
+#sidebar-overdue.active { background: var(--error-light); color: #ef4444; }
+#sidebar-overdue .item-count { background: #fee2e2; color: #ef4444; }
+
 .sidebar-item svg { flex-shrink: 0; opacity: 0.85; }
 .sidebar-item .item-count {
   margin-left: auto;
@@ -1063,4 +1069,279 @@ body.dark-theme .habit-cell-na     { border: 1px dashed #4a4a4a; opacity: 0.5; }
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ──────────────────────────────────────────
+   Backend Wake-Up Screen
+────────────────────────────────────────── */
+.wakeup-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  padding: 24px 16px;
+}
+
+.wakeup-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 32px rgba(0,0,0,0.10);
+  padding: 48px 40px;
+  max-width: 420px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+
+.wakeup-logo-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: var(--blue-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.wakeup-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  animation: wakeup-float 3s ease-in-out infinite;
+}
+
+@keyframes wakeup-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+
+.wakeup-title {
+  font-family: var(--font-brand);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+
+.wakeup-sub {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: 8px;
+}
+
+.wakeup-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-top: 4px;
+  max-width: 320px;
+}
+
+.wakeup-progress {
+  width: 100%;
+  max-width: 280px;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--border);
+  overflow: hidden;
+  margin-top: 18px;
+}
+
+.wakeup-bar {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--blue);
+  animation: wakeup-progress 2s ease-in-out infinite;
+}
+
+@keyframes wakeup-progress {
+  0%   { width: 0%;   margin-left: 0; }
+  50%  { width: 70%;  margin-left: 0; }
+  100% { width: 0%;   margin-left: 100%; }
+}
+
+.wakeup-dots {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.wakeup-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--blue);
+  animation: wakeup-bounce 1.2s ease-in-out infinite;
+}
+
+.wakeup-dots span:nth-child(2) { animation-delay: 0.2s; }
+.wakeup-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes wakeup-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+  40%            { transform: scale(1);   opacity: 1; }
+}
+
+.wakeup-timer {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  margin-top: 10px;
+  letter-spacing: 0.5px;
+}
+
+.wakeup-error-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--error-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--error);
+  margin-bottom: 8px;
+}
+
+/* ──────────────────────────────────────────
+   Hamburger Button (mobile only by default)
+────────────────────────────────────────── */
+.hamburger-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: background var(--transition);
+}
+
+.hamburger-btn:hover { background: var(--blue-light); color: var(--blue); }
+
+/* Add Task label – hide text on very small screens */
+.add-task-label { display: inline; }
+
+/* ──────────────────────────────────────────
+   Sidebar Mobile Overlay
+────────────────────────────────────────── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 49;
+  backdrop-filter: blur(1px);
+}
+
+.sidebar-overlay--visible { display: block; }
+
+/* ──────────────────────────────────────────
+   Responsive – Mobile (≤ 768px)
+────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* ── Sidebar goes off-canvas ── */
+  .sidebar {
+    position: fixed;
+    left: calc(-1 * var(--sidebar-w) - 10px);
+    top: 0;
+    height: 100vh;
+    z-index: 50;
+    transition: left 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: none;
+  }
+
+  .sidebar--open {
+    left: 0;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  }
+
+  /* ── Dashboard layout fills full width ── */
+  .dashboard {
+    flex-direction: column;
+  }
+
+  .dash-main {
+    width: 100%;
+    min-height: 100vh;
+  }
+
+  /* ── Header on mobile ── */
+  .dash-header {
+    padding: 14px 16px;
+    gap: 12px;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .dash-header > div { flex: 1; min-width: 0; }
+
+  .hamburger-btn { display: flex; }
+
+  .dash-title { font-size: 1.1rem; }
+  .dash-date  { font-size: 0.75rem; }
+
+  /* ── Content area ── */
+  .dash-content {
+    padding: 14px 16px;
+    gap: 16px;
+  }
+
+  /* ── Compact task items ── */
+  .task-item { padding: 10px 12px; gap: 10px; }
+  .task-actions { opacity: 1; } /* always visible on touch */
+
+  /* ── Habit grid scrolls horizontally ── */
+  .habit-history-grid {
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  /* ── Modals full-width ── */
+  .modal {
+    max-width: 100%;
+    margin: 0;
+    border-radius: var(--radius);
+    padding: 22px 18px;
+  }
+
+  .modal-overlay { padding: 12px; }
+
+  /* ── Auth card ── */
+  .auth-card {
+    padding: 28px 20px;
+  }
+
+  /* ── Toast bottom offset ── */
+  .toast-container {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+  }
+
+  .toast { max-width: 100%; }
+
+  /* ── Add Task button compact ── */
+  #dash-add-task {
+    padding: 8px 10px !important;
+    min-width: 36px;
+  }
+
+  .add-task-label { display: none; }
+}
+
+/* ── Extra small (≤ 380px) ── */
+@media (max-width: 380px) {
+  .otp-box { width: 40px; height: 48px; font-size: 1.1rem; }
+  .otp-boxes { gap: 6px; }
+  .wakeup-card { padding: 36px 20px; }
 }
