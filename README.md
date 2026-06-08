@@ -20,7 +20,7 @@ The backend is a REST API built with **Node.js + Express**, connected to **Mongo
 | Framework | Express.js |
 | Database | MongoDB Atlas + Mongoose |
 | Auth | JWT (httpOnly cookies) + bcryptjs |
-| Email | Nodemailer (OTP delivery) |
+| Email | [Brevo](https://brevo.com) SMTP API via axios (OTP + transactional emails) |
 | Deployment | Render (free tier) |
 
 ---
@@ -113,19 +113,59 @@ PORT=8000
 MONGO_URI=mongodb+srv://...
 JWT_SECRET=your_jwt_secret
 JWT_EXPIRES_IN=7d
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_app_password
+FROM_USER=your_sender_email@domain.com
+BREVO_API_KEY=your_brevo_api_key
 ```
 
 ---
 
 ### Running Locally
 
+**Backend**
+
 ```bash
 cd timesticks_backend
 npm install
-# create a .env file with the vars above
+# create a .env file with the vars listed above
 npm run dev
 ```
 
-The server starts on `http://localhost:8000`. Health check: `GET /health`.
+Server starts on `http://localhost:8000`. Health check: `GET /health`.
+
+> ⚠️ **CORS:** `src/app.js` has the allowed origin hardcoded to the production URL. Before running locally, update it to allow `http://localhost:5173`:
+> ```js
+> app.use(cors({
+>     origin: 'http://localhost:5173',
+>     credentials: true,
+> }));
+> ```
+> Or accept both at once:
+> ```js
+> app.use(cors({
+>     origin: ['http://localhost:5173', 'https://timesticks.onrender.com'],
+>     credentials: true,
+> }));
+> ```
+
+---
+
+**Frontend**
+
+```bash
+cd timesticks_frontend
+npm install
+```
+
+Create a `.env` file inside `timesticks_frontend/`:
+
+```env
+VITE_API_URL=http://localhost:8000/api
+```
+
+> If you leave `VITE_API_URL` unset, the frontend defaults to `http://localhost:8000/api` automatically.
+
+```bash
+npm run dev
+```
+
+App starts on `http://localhost:5173` (or the next available port — Vite will tell you).
