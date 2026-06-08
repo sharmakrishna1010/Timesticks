@@ -25,42 +25,6 @@ The backend is a REST API built with **Node.js + Express**, connected to **Mongo
 
 ---
 
-### Project Structure
-
-```
-timesticks_backend/
-└── src/
-    ├── app.js               # Express app setup, CORS, middleware, route mounting
-    ├── server.js            # Entry point — connects to DB and starts server
-    ├── config/              # DB connection config
-    ├── constants/           # Task limits for free vs premium users
-    ├── controllers/         # Business logic
-    │   ├── auth.controller.js
-    │   ├── task.controller.js
-    │   ├── habit.controller.js
-    │   └── list.controller.js
-    ├── middlewares/
-    │   └── requireAuth.js   # JWT verification + email-verified guard
-    ├── models/              # Mongoose schemas
-    │   ├── user.model.js
-    │   ├── task.model.js
-    │   ├── habit.model.js
-    │   ├── list.model.js
-    │   └── otp.model.js
-    ├── routes/              # Express routers
-    │   ├── auth.routes.js
-    │   ├── task.routes.js
-    │   ├── habit.routes.js
-    │   └── list.routes.js
-    └── utils/
-        ├── dateUtils.js           # Timezone-aware date helpers
-        ├── generateToken.js       # JWT creation + cookie setter
-        ├── generateAndSendOTP.js  # OTP hashing + email dispatch
-        └── sendMail.js            # Nodemailer wrapper
-```
-
----
-
 ### API Reference
 
 All protected routes require a valid `jwt` httpOnly cookie. The frontend also sends an `x-timezone` header (IANA timezone string) on every request so the backend can compute dates in the user's local time.
@@ -105,70 +69,6 @@ All protected routes require a valid `jwt` httpOnly cookie. The frontend also se
 | `POST` | `/create` | ✓ | Creates a named list (max 10 lists per user). |
 | `PUT` | `/:listId` | ✓ | Renames a list (cannot rename the default Inbox). |
 | `DELETE` | `/:listId` | ✓ | Deletes a list. If `deleteAllTasks=true` in body, also deletes all tasks in that list; otherwise moves them to the default Inbox. |
-
----
-
-### Data Models
-
-#### User
-```js
-{
-  fullName:        String,   // 5–20 alpha chars
-  email:           String,   // unique
-  password:        String,   // bcrypt hashed
-  havePremium:     Boolean,  // default false
-  isEmailVerified: Boolean,  // must be true to access protected routes
-  timestamps:      true
-}
-```
-
-#### Task
-```js
-{
-  user:        ObjectId → User,
-  list:        ObjectId → List,
-  title:       String,          // max 50 chars
-  description: String,          // max 250 chars
-  done:        Boolean,
-  priority:    'High' | 'Medium' | 'Low',
-  dueDate:     Date,
-  timestamps:  true
-}
-```
-
-#### Habit
-```js
-{
-  user:          ObjectId → User,
-  title:         String,        // max 50 chars
-  description:   String,        // max 250 chars
-  currentStreak: Number,
-  highestStreak: Number,
-  todayStatus:   Boolean,       // reset daily based on user timezone
-  history: [{ date: 'YYYY-MM-DD', completed: Boolean }],
-  timestamps: true
-}
-```
-
-#### List
-```js
-{
-  user:      ObjectId → User,
-  title:     String,
-  isDefault: Boolean,           // true for the auto-created Inbox
-  timestamps: true
-}
-```
-
-#### OTP
-```js
-{
-  userId:    ObjectId → User,
-  otp:       String,    // bcrypt hashed 6-digit code
-  expiresAt: Date,      // 10 minutes from creation
-  timestamps: true
-}
-```
 
 ---
 
