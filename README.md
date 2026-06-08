@@ -4,7 +4,7 @@ A personal productivity app for managing tasks, habits, and lists — with prior
 
 Heavily inspired by [TickTick](https://ticktick.com), which I use every single day. Built this to understand how something like it actually works under the hood.
 
-> **Frontend note:** The entire frontend is vibe-coded using [Antigravity IDE](https://antigravity.dev). I'm still learning React and wanted to ship something real, so I coded the backend myself and let Antigravity handle the frontend. It was a great way to move fast while focusing on what I actually wanted to learn.
+> **Frontend note:** The entire frontend is vibe-coded using [Antigravity IDE](https://antigravity.google/). I'm still learning React and wanted to ship something real, so I coded the backend myself and let Antigravity handle the frontend. It was a great way to move fast while focusing on what I actually wanted to learn.
 
 ---
 
