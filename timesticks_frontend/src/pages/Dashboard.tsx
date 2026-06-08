@@ -73,7 +73,7 @@ function getViewLabel(viewMode: ViewMode, lists: List[]): string {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { theme } = useAuth();
+  const { theme, logout } = useAuth();
 
   // ── Apply Dark Theme ───────────────────────
   useEffect(() => {
@@ -123,7 +123,7 @@ export default function Dashboard() {
         setLists(listsRes.data);
         setHabits(habitsRes.data);
       } catch (err: any) {
-        if ([401, 403].includes(err?.response?.status)) { navigate('/login'); return; }
+        if ([401, 403].includes(err?.response?.status)) { logout(); navigate('/login'); return; }
         toast('error', 'Failed to load data');
       } finally { setLoading(false); }
     })();
