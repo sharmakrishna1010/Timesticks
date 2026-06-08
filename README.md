@@ -33,6 +33,7 @@ All protected routes require a valid `jwt` httpOnly cookie. The frontend also se
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
+| `GET`  | `/me` | ✓ | Verifies the JWT cookie on initial load. Returns the user object if the session is active. Crucial for preventing UI flashing and correctly handling cold starts. |
 | `POST` | `/signup` | ✗ | Register a new user. Hashes password, sends OTP to email, sets JWT cookie, creates default Inbox list and welcome task. |
 | `POST` | `/login` | ✗ | Authenticate user. Returns JWT cookie. |
 | `POST` | `/logout` | ✗ | Clears the JWT cookie. |
@@ -102,6 +103,13 @@ Protected routes
   → verifies JWT signature
   → checks isEmailVerified
   → attaches user to req.user
+
+Initial Load / Session Verification
+  → App wraps routes in BackendWakeUp and Route Guards
+  → If localStorage has user, frontend calls /api/auth/me
+  → BackendWakeUp holds the UI while the server spins up
+  → If /me succeeds, user proceeds to Dashboard smoothly
+  → If /me fails (401/403), frontend clears localStorage and forces Login
 ```
 
 ---

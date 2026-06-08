@@ -1,7 +1,10 @@
 import express from "express";
-import { login, logout, signup, verifyOTP, resendOTP, resetPassword, resetPasswordVerification } from "../controllers/auth.controller.js";
+import { login, logout, signup, verifyOTP, resendOTP, resetPassword, resetPasswordVerification, verifyMe } from "../controllers/auth.controller.js";
+import { requireAuth } from "../middlewares/requireAuth.js";
 
 const router = express.Router();
+
+router.get("/me", requireAuth, verifyMe);
 
 router.post("/signup", signup);
 

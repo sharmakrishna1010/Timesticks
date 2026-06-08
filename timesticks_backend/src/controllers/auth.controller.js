@@ -23,6 +23,22 @@ const validateFullName = (fullName) => {
     return regex.test(fullName);
 }
 
+export const verifyMe = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select("-password");
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        res.status(200).json({
+            userId: user._id,
+            email: user.email,
+            fullName: user.fullName
+        });
+    } catch (error) {
+        console.error("Error in verifyMe:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
 export const login = async (req, res) => {
     if (!req.body || Object.keys(req.body).length === 0) {
         return res.status(400).json({ message: "All fields are required" });

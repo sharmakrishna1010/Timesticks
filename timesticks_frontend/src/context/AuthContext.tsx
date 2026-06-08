@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { authApi } from '../api/auth';
 
 interface AuthUser {
   userId: string;
@@ -14,6 +15,7 @@ interface AuthContextValue {
   logout: () => void;
   theme: 'light' | 'dark';
   toggleTheme: () => void;
+  isVerifying: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -29,6 +31,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('timesticks_theme') as 'light' | 'dark') || 'light';
   });
+
+  const [isVerifying, setIsVerifying] = useState(!!user);
+
+  useEffect(() => {
+    if (!user) {
+      setIsVerifying(false);
+      return;
+    }
+    const verifySession = async () => {
+      try {
+        const response = await authApi.verifyMe();
+        setUserState(response.data);
+      } catch (error: any) {
+        if (error?.response?.status === 401 || error?.response?.status === 403) {
+          setUserState(null);
+          localStorage.removeItem('timesticks_user');
+        }
+      } finally {
+        setIsVerifying(false);
+      }
+    };
+
+    verifySession();
+  }, []);
 
   const setUser = useCallback((u: AuthUser | null) => {
     setUserState(u);
@@ -50,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, setUser, pendingVerify, setPendingVerify, logout, theme, toggleTheme }}>
+    <AuthContext.Provider value={{ user, setUser, pendingVerify, setPendingVerify, logout, theme, toggleTheme, isVerifying }}>
       {children}
     </AuthContext.Provider>
   );

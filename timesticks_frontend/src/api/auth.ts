@@ -7,6 +7,8 @@ export const authApi = {
   login: (data: { email: string; password: string }) =>
     api.post('/auth/login', data),
 
+  verifyMe: () => api.get('/auth/me'),
+
   logout: () =>
     api.post('/auth/logout'),
 

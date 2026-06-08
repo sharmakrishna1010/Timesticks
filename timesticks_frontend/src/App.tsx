@@ -11,7 +11,8 @@ import Dashboard from './pages/Dashboard';
  * Used to guard public-only routes (login, signup).
  */
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, isVerifying } = useAuth();
+  if (isVerifying) return <div className="loading-page"><span className="spinner" /></div>;
   if (user) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
@@ -21,7 +22,8 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
  * Used to guard private routes (dashboard).
  */
 function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, isVerifying } = useAuth();
+  if (isVerifying) return <div className="loading-page"><span className="spinner" /></div>;
   if (!user) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
@@ -30,7 +32,8 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
  * Smart root redirect: logged-in → dashboard, guest → login.
  */
 function RootRedirect() {
-  const { user } = useAuth();
+  const { user, isVerifying } = useAuth();
+  if (isVerifying) return <div className="loading-page"><span className="spinner" /></div>;
   return <Navigate to={user ? '/dashboard' : '/login'} replace />;
 }
 
@@ -44,18 +47,18 @@ function App() {
 
           {/* Public routes — redirect to dashboard if already logged in */}
           <Route path="/signup" element={
-            <PublicRoute>
-              <BackendWakeUp forceLight>
+            <BackendWakeUp forceLight>
+              <PublicRoute>
                 <SignUp />
-              </BackendWakeUp>
-            </PublicRoute>
+              </PublicRoute>
+            </BackendWakeUp>
           } />
           <Route path="/login" element={
-            <PublicRoute>
-              <BackendWakeUp forceLight>
+            <BackendWakeUp forceLight>
+              <PublicRoute>
                 <Login />
-              </BackendWakeUp>
-            </PublicRoute>
+              </PublicRoute>
+            </BackendWakeUp>
           } />
           <Route path="/verify-otp" element={
             <BackendWakeUp forceLight>
@@ -65,11 +68,11 @@ function App() {
 
           {/* Private route — redirect to login if not logged in */}
           <Route path="/dashboard" element={
-            <PrivateRoute>
-              <BackendWakeUp>
+            <BackendWakeUp>
+              <PrivateRoute>
                 <Dashboard />
-              </BackendWakeUp>
-            </PrivateRoute>
+              </PrivateRoute>
+            </BackendWakeUp>
           } />
 
           {/* Catch-all: same smart redirect */}
