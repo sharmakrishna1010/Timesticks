@@ -168,8 +168,11 @@ export const toggleHabitToday = async (req, res) => {
         const hasCompletedYesterday = habit.history.some(entry => entry.date === yesterdayStr && entry.completed);
 
         if (hasCompletedToday) {
-            
             habit.history.splice(todayEntryIndex, 1);
+
+            if (habit.highestStreak > 0 && habit.highestStreak === habit.currentStreak) {
+                habit.highestStreak -= 1;
+            }
             
             if (hasCompletedYesterday) {
                 habit.currentStreak = Math.max(0, habit.currentStreak - 1); 
@@ -178,7 +181,6 @@ export const toggleHabitToday = async (req, res) => {
             }
 
         } else {
-            
             habit.history.push({ date: todayStr, completed: true });
 
             if (hasCompletedYesterday) {
