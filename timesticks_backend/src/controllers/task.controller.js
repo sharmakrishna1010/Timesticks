@@ -132,6 +132,9 @@ export const getTasks = async (req, res) => {
 export const toggleComplete = async (req, res) => {
     try {
         const { taskId } = req.params;
+        const userTimezone = req.headers['x-timezone'];
+        const localTodayStr = getLocalToday(userTimezone);
+
         const task = await Task.findOne({ _id: taskId, user: req.user._id });
 
         if (!task) {
@@ -139,9 +142,20 @@ export const toggleComplete = async (req, res) => {
         }
 
         task.done = !task.done;
-
         await task.save();
-        res.status(200).json(task);
+
+        const updatedTask = task.toObject();
+
+        let dynamicStatus = "Upcoming";
+        if (updatedTask.dueDate === localTodayStr) {
+            dynamicStatus = "Due Today";
+        } else if (updatedTask.dueDate < localTodayStr && !updatedTask.done) {
+            dynamicStatus = "Overdue";
+        }
+
+        updatedTask.relativeStatus = dynamicStatus;
+
+        res.status(200).json(updatedTask);
     } catch (error) {
         console.error("ERROR IN TOGGLE COMPLETE TASK:", error);
         res.status(500).json({ error: "Failed to toggle complete task" });

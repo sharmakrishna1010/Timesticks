@@ -151,50 +151,55 @@ export const deleteHabit = async (req, res) => {
 export const toggleHabitToday = async (req, res) => {
     try {
         const { habitId } = req.params;
+        const userTimezone = req.headers['x-timezone'];
+        
+        const todayStr = getLocalToday(userTimezone);
+        const yesterdayStr = getLocalYesterday(userTimezone);
 
-        const habit = await Habit.findOne(
-            { _id: habitId, user: req.user._id }
-        );
+        const habit = await Habit.findOne({ _id: habitId, user: req.user._id });
 
         if (!habit) {
             return res.status(404).json({ message: "Habit not found." });
         }
 
-        const today = new Date().toISOString().split('T')[0];
+        const todayEntryIndex = habit.history.findIndex(entry => entry.date === todayStr);
+        const hasCompletedToday = todayEntryIndex !== -1 && habit.history[todayEntryIndex].completed;
 
-        if (!habit.todayStatus) {
+        const hasCompletedYesterday = habit.history.some(entry => entry.date === yesterdayStr && entry.completed);
 
-            habit.todayStatus = true;
-            habit.currentStreak++;
+        if (hasCompletedToday) {
+            
+            habit.history.splice(todayEntryIndex, 1);
+            
+            if (hasCompletedYesterday) {
+                habit.currentStreak = Math.max(0, habit.currentStreak - 1); 
+            } else {
+                habit.currentStreak = 0;
+            }
+
+        } else {
+            
+            habit.history.push({ date: todayStr, completed: true });
+
+            if (hasCompletedYesterday) {
+                habit.currentStreak += 1;
+            } else {
+                habit.currentStreak = 1;
+            }
 
             if (habit.currentStreak > habit.highestStreak) {
                 habit.highestStreak = habit.currentStreak;
             }
-
-            const existingEntry = habit.history.find(h => h.date === today);
-
-            if (!existingEntry) {
-                habit.history.push({ date: today, completed: true });
-            } else {
-                existingEntry.completed = true;
-            }
-
-        } else {
-            habit.todayStatus = false;
-
-            if (habit.highestStreak === habit.currentStreak) {
-                habit.highestStreak = Math.max(0, habit.highestStreak - 1);
-            }
-
-            habit.currentStreak = Math.max(0, habit.currentStreak - 1);
-
-            habit.history = habit.history.filter(h => h.date !== today);
         }
+
         await habit.save();
 
+        const updatedHabit = habit.toObject();
+        updatedHabit.todayStatus = !hasCompletedToday;
+
         return res.status(200).json({
-            message: habit.todayStatus ? "Habit completed!" : "Habit unchecked.",
-            habit
+            message: !hasCompletedToday ? "Habit completed!" : "Habit unchecked.",
+            habit: updatedHabit
         });
 
     } catch (error) {
