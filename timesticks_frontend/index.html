@@ -9,8 +9,62 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
     <title>Timesticks — Tasks & Habits</title>
+
+    <!-- Instant splash screen — shown before React JS bundle loads.
+         React will overwrite #root the moment it mounts, so this
+         vanishes automatically with no flicker. -->
+    <style>
+      #ts-splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        background: #f8f9fa;
+        font-family: 'Inter', system-ui, sans-serif;
+        z-index: 9999;
+      }
+
+      #ts-splash .ts-splash-logo {
+        width: 56px;
+        height: 56px;
+      }
+
+      #ts-splash .ts-splash-ring {
+        width: 36px;
+        height: 36px;
+        border: 3px solid #e5e7eb;
+        border-top-color: #1D9BF0;
+        border-radius: 50%;
+        animation: ts-spin 700ms linear infinite;
+      }
+
+      #ts-splash .ts-splash-text {
+        font-size: 0.82rem;
+        color: #9ca3af;
+        font-weight: 500;
+        letter-spacing: 0.2px;
+      }
+
+      @keyframes ts-spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
   </head>
   <body>
+    <!-- Splash shown immediately — replaced by React on mount -->
+    <div id="ts-splash" aria-label="Loading Timesticks">
+      <img
+        class="ts-splash-logo"
+        src="/logo_noBG.png"
+        alt="Timesticks"
+      />
+      <div class="ts-splash-ring"></div>
+      <p class="ts-splash-text">Loading Timesticks…</p>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
